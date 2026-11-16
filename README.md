@@ -25,6 +25,6 @@ XSD-, JSON Schema- ja IDS-tabulaattorit, BPMN:n piirtäminen SVG:ksi, GitHub Pag
 
 ## Kuvan julkaisu
 
-GitHub Actions julkaisee kuvan GHCR:ään. Push `main`-haaraan julkaisee tagin `edge`. Git-tagi `v0.1.1` julkaisee `0.1.1` ja `0.1`. Julkaisurepo kiinnittää versionumeron, jotta vanha julkaisu rakentuu myöhemmin samalla moottorilla.
+GitHub Actions julkaisee kuvan GHCR:ään. Push `main`-haaraan julkaisee tagin `edge`. Git-tagi `v0.1.2` julkaisee `0.1.2` ja `0.1`. Julkaisurepo kiinnittää versionumeron, jotta vanha julkaisu rakentuu myöhemmin samalla moottorilla.
 
-Nykyinen kiinnitys on `ghcr.io/mvesanen/rytv-builder:0.1.1`.
+Nykyinen kiinnitys on `ghcr.io/mvesanen/rytv-builder:0.1.2`.

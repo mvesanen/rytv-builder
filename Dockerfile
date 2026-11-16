@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pandoc \
         texlive-xetex \
         texlive-fonts-recommended \
+        lmodern \
         fonts-dejavu \
         nodejs \
         npm \
