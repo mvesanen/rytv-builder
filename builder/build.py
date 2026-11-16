@@ -89,12 +89,20 @@ def render_mermaid(diagrams: Path, figures: Path) -> list[Path]:
             if not render_with_kroki(source, target):
                 continue
         else:
-            subprocess.run(
-                ["mmdc", "-i", str(source), "-o", str(target), "-b", "transparent"],
-                check=True,
-            )
+            run_mmdc(source, target)
         rendered.append(target)
     return rendered
+
+
+def run_mmdc(source: Path, target: Path) -> None:
+    command = ["mmdc", "-i", str(source), "-o", str(target), "-b", "transparent"]
+    config = Path(os.environ.get("MMDC_PUPPETEER_CONFIG", "/puppeteer-config.json"))
+    if config.is_file():
+        command += ["-p", str(config)]
+    result = subprocess.run(command, check=False, capture_output=True, text=True)
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip()
+        raise SystemExit(f"mmdc failed for {source.name}:\n{detail}")
 
 
 def render_with_kroki(source: Path, target: Path) -> bool:
