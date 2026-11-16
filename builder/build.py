@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -18,11 +19,16 @@ TEMPLATE_ROOT = Path(__file__).resolve().parents[1] / "templates"
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Build a RYTV publication.")
     parser.add_argument("root", nargs="?", default=".", help="Publication repository root")
+    parser.add_argument(
+        "--version",
+        default=os.environ.get("RYTV_VERSION", ""),
+        help="Publication version. A release tag is used as given; otherwise the default is dev-<commit>.",
+    )
     args = parser.parse_args(argv)
-    build(Path(args.root).resolve())
+    build(Path(args.root).resolve(), args.version)
 
 
-def build(root: Path) -> Path:
+def build(root: Path, requested_version: str = "") -> Path:
     config_path = root / "publication.json"
     if not config_path.is_file():
         raise SystemExit(f"missing {config_path}")
@@ -45,9 +51,10 @@ def build(root: Path) -> Path:
     copied = copy_machine_readable(root, machine)
 
     title = config.get("title", "RYTV")
+    version = resolve_version(root, requested_version)
     metadata = {"title": title}
-    if config.get("version"):
-        metadata["version"] = str(config["version"])
+    if version:
+        metadata["version"] = version
     if config.get("language"):
         metadata["lang"] = str(config["language"])
     resource_path = os.pathsep.join(
@@ -85,7 +92,7 @@ def build(root: Path) -> Path:
         "title": title,
         "language": config.get("language", ""),
         "domain": config.get("domain", ""),
-        "version": config.get("version", ""),
+        "version": version,
         "diagrams": [path.name for path in rendered],
         "machineReadable": [path.relative_to(machine).as_posix() for path in copied],
     }
@@ -95,6 +102,30 @@ def build(root: Path) -> Path:
     )
     print(f"built {artefact}")
     return artefact
+
+
+def resolve_version(root: Path, requested: str) -> str:
+    chosen = requested.strip()
+    if chosen.startswith("dev-"):
+        return chosen
+    if chosen:
+        if len(chosen) > 1 and chosen[0] == "v" and chosen[1].isdigit():
+            return chosen[1:]
+        return chosen
+    return dev_version(root)
+
+
+def dev_version(root: Path) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    commit = result.stdout.strip()
+    if result.returncode != 0 or not re.fullmatch(r"[0-9a-fA-F]{7,64}", commit):
+        return ""
+    return f"dev-{commit[:7]}"
 
 
 def render_mermaid(diagrams: Path, figures: Path) -> list[Path]:
