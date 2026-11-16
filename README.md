@@ -19,12 +19,21 @@ docker run --rm -v C:\polku\julkaisuun:/publication rytv-builder
 
 Komento lukee `publication.json`, piirtää `diagrams/*.mmd`-tiedostot PNG-kuviksi ja ajaa Pandocin. Skeemat, IDS-tiedostot ja `.bpmn`-kuvaukset kopioidaan artefaktiin sellaisenaan.
 
+## Ulkoasu
+
+PDF- ja HTML-pohjat ovat moottorissa, jotta kuvan versio kiinnittää myös julkaisun asun.
+
+- `templates/pdf/default.latex` on PDF:n kansilehti, ylätunniste ja sivunumero.
+- `templates/html/default.html` ja `templates/html/default.css` ovat selainjulkaisu. Tyylit kopioidaan artefaktiin nimellä `styles.css`.
+
+Julkaisu voi valita toisen pohjan `publication.json`-avaimilla `pdfTemplate` ja `htmlTemplate`. Oletus on `default`.
+
 ## Mitä tämä versio ei vielä tee
 
 XSD-, JSON Schema- ja IDS-tabulaattorit, BPMN:n piirtäminen SVG:ksi, GitHub Pagesin versioarkisto ja kuvien zoomaus tulevat seuraavaksi. Nykyinen komento kokoaa jo kirjoitetun markdownin ja säilyttää koneluettavat lähdetiedostot julkaisupaketissa.
 
 ## Kuvan julkaisu
 
-GitHub Actions julkaisee kuvan GHCR:ään. Push `main`-haaraan julkaisee tagin `edge`. Git-tagi `v0.1.3` julkaisee `0.1.3` ja `0.1`. Julkaisurepo kiinnittää versionumeron, jotta vanha julkaisu rakentuu myöhemmin samalla moottorilla.
+GitHub Actions julkaisee kuvan GHCR:ään. Push `main`-haaraan julkaisee tagin `edge`. Git-tagi `v0.1.4` julkaisee `0.1.4` ja `0.1`. Julkaisurepo kiinnittää versionumeron, jotta vanha julkaisu rakentuu myöhemmin samalla moottorilla.
 
-Nykyinen kiinnitys on `ghcr.io/mvesanen/rytv-builder:0.1.3`.
+Nykyinen kiinnitys on `ghcr.io/mvesanen/rytv-builder:0.1.4`.

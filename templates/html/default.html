@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html$if(lang)$ lang="$lang$"$endif$>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="pandoc">
+  <title>$if(title)$$title$$else$RYTV$endif$</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand">RYTV</span>
+$if(title)$
+    <span class="doctitle">$title$</span>
+$endif$
+$if(version)$
+    <span class="version">$version$</span>
+$endif$
+  </header>
+  <div class="layout">
+$if(toc)$
+    <aside class="sidebar">
+$toc$
+    </aside>
+$endif$
+    <main>
+$body$
+    </main>
+  </div>
+</body>
+</html>

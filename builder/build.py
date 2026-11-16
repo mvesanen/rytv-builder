@@ -12,6 +12,7 @@ import urllib.request
 from pathlib import Path
 
 MACHINE_SUFFIXES = {".xsd", ".json", ".ids", ".ifc", ".yaml", ".yml", ".bpmn"}
+TEMPLATE_ROOT = Path(__file__).resolve().parents[1] / "templates"
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -44,6 +45,11 @@ def build(root: Path) -> Path:
     copied = copy_machine_readable(root, machine)
 
     title = config.get("title", "RYTV")
+    metadata = {"title": title}
+    if config.get("version"):
+        metadata["version"] = str(config["version"])
+    if config.get("language"):
+        metadata["lang"] = str(config["language"])
     resource_path = os.pathsep.join(
         [
             markdown.parent.relative_to(root).as_posix(),
@@ -58,7 +64,10 @@ def build(root: Path) -> Path:
         title,
         config.get("pdfFont"),
         cwd=root,
+        template=appearance_template("pdf", config.get("pdfTemplate", "default")),
+        metadata=metadata,
     )
+    html_template = appearance_template("html", config.get("htmlTemplate", "default"))
     pandoc(
         markdown,
         html_dir / "index.html",
@@ -67,7 +76,10 @@ def build(root: Path) -> Path:
         pdf=False,
         media_dir=Path("artefact/html/media"),
         cwd=root,
+        template=html_template,
+        metadata=metadata,
     )
+    shutil.copy2(html_template.with_suffix(".css"), html_dir / "styles.css")
 
     index = {
         "title": title,
@@ -153,6 +165,16 @@ def copy_machine_readable(root: Path, machine: Path) -> list[Path]:
     return copied
 
 
+def appearance_template(kind: str, name: str) -> Path:
+    suffix = {"html": ".html", "pdf": ".latex"}[kind]
+    path = TEMPLATE_ROOT / kind / f"{name}{suffix}"
+    if not path.is_file():
+        raise SystemExit(f"missing {kind} template {name}")
+    if kind == "html" and not path.with_suffix(".css").is_file():
+        raise SystemExit(f"missing stylesheet for html template {name}")
+    return path
+
+
 def pandoc_pdf(
     markdown: Path,
     output: Path,
@@ -160,6 +182,8 @@ def pandoc_pdf(
     title: str,
     requested_font: str | None,
     cwd: Path,
+    template: Path,
+    metadata: dict,
 ) -> None:
     preferred = ["Segoe UI", "DejaVu Sans", "Liberation Sans"] if os.name == "nt" else ["DejaVu Sans", "Liberation Sans", "Segoe UI"]
     fonts = []
@@ -169,7 +193,17 @@ def pandoc_pdf(
     last_error = None
     for font in fonts:
         try:
-            pandoc(markdown, output, resource_path, title, font, pdf=True, cwd=cwd)
+            pandoc(
+                markdown,
+                output,
+                resource_path,
+                title,
+                font,
+                pdf=True,
+                cwd=cwd,
+                template=template,
+                metadata=metadata,
+            )
             return
         except subprocess.CalledProcessError as error:
             last_error = error
@@ -187,6 +221,8 @@ def pandoc(
     pdf: bool = False,
     media_dir: Path | None = None,
     cwd: Path | None = None,
+    template: Path | None = None,
+    metadata: dict | None = None,
 ) -> None:
     command = [
         "pandoc",
@@ -195,11 +231,17 @@ def pandoc(
         str(output),
         f"--resource-path={resource_path}",
         "--standalone",
-        "-M",
-        f"title={title}",
     ]
+    fields = {"title": title, **(metadata or {})}
+    if pdf and font:
+        fields["mainfont"] = font
+    for key, value in fields.items():
+        if value:
+            command += ["-M", f"{key}={value}"]
+    if template is not None:
+        command += [f"--template={template}"]
     if pdf:
-        command += ["--pdf-engine=xelatex", "-V", f"mainfont={font}", "-V", "geometry:margin=2.2cm"]
+        command += ["--pdf-engine=xelatex"]
     elif media_dir is not None:
         command += ["--extract-media", media_dir.as_posix()]
     subprocess.run(command, check=True, cwd=cwd)

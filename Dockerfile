@@ -21,6 +21,7 @@ RUN npm install -g @mermaid-js/mermaid-cli
 WORKDIR /opt/rytv-builder
 COPY docker/puppeteer-config.json /puppeteer-config.json
 COPY builder /opt/rytv-builder/builder
+COPY templates /opt/rytv-builder/templates
 ENV PYTHONPATH=/opt/rytv-builder
 
 ENTRYPOINT ["python", "-m", "builder"]
