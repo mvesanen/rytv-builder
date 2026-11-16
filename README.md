@@ -17,7 +17,7 @@ docker build -t rytv-builder .
 docker run --rm -v C:\polku\julkaisuun:/publication rytv-builder
 ```
 
-Komento lukee `publication.json`, piirtää `diagrams/*.mmd`-tiedostot SVG:ksi, jos `mmdc` on asennettu, ja ajaa Pandocin. Skeemat, IDS-tiedostot ja `.bpmn`-kuvaukset kopioidaan artefaktiin sellaisenaan.
+Komento lukee `publication.json`, piirtää `diagrams/*.mmd`-tiedostot PNG-kuviksi ja ajaa Pandocin. Skeemat, IDS-tiedostot ja `.bpmn`-kuvaukset kopioidaan artefaktiin sellaisenaan.
 
 ## Mitä tämä versio ei vielä tee
 
@@ -25,4 +25,6 @@ XSD-, JSON Schema- ja IDS-tabulaattorit, BPMN:n piirtäminen SVG:ksi, GitHub Pag
 
 ## Kuvan julkaisu
 
-Kuva on tarkoitettu nimelle `ghcr.io/mvesanen/rytv-builder`. Julkaisurepo kiinnittää tagin, esimerkiksi `0.1.0`, jotta vanha julkaisu rakentuu myöhemmin samalla moottorilla.
+GitHub Actions julkaisee kuvan GHCR:ään. Push `main`-haaraan julkaisee tagin `edge`. Git-tagi `v0.1.0` julkaisee `0.1.0` ja `0.1`. Julkaisurepo kiinnittää versionumeron, jotta vanha julkaisu rakentuu myöhemmin samalla moottorilla.
+
+Nykyinen kiinnitys on `ghcr.io/mvesanen/rytv-builder:0.1.0`.
