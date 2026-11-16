@@ -45,16 +45,28 @@ def build(root: Path) -> Path:
 
     title = config.get("title", "RYTV")
     resource_path = os.pathsep.join(
-        [str(markdown.parent), str(figures), str(root / "figures")]
+        [
+            markdown.parent.relative_to(root).as_posix(),
+            figures.relative_to(root).as_posix(),
+            "figures",
+        ]
     )
-    pandoc_pdf(markdown, artefact / "publication.pdf", resource_path, title, config.get("pdfFont"))
+    pandoc_pdf(
+        markdown,
+        artefact / "publication.pdf",
+        resource_path,
+        title,
+        config.get("pdfFont"),
+        cwd=root,
+    )
     pandoc(
         markdown,
         html_dir / "index.html",
         resource_path,
         title,
         pdf=False,
-        media_dir=html_dir / "media",
+        media_dir=Path("artefact/html/media"),
+        cwd=root,
     )
 
     index = {
@@ -141,7 +153,14 @@ def copy_machine_readable(root: Path, machine: Path) -> list[Path]:
     return copied
 
 
-def pandoc_pdf(markdown: Path, output: Path, resource_path: str, title: str, requested_font: str | None) -> None:
+def pandoc_pdf(
+    markdown: Path,
+    output: Path,
+    resource_path: str,
+    title: str,
+    requested_font: str | None,
+    cwd: Path,
+) -> None:
     preferred = ["Segoe UI", "DejaVu Sans", "Liberation Sans"] if os.name == "nt" else ["DejaVu Sans", "Liberation Sans", "Segoe UI"]
     fonts = []
     for name in ([requested_font] if requested_font else []) + preferred:
@@ -150,7 +169,7 @@ def pandoc_pdf(markdown: Path, output: Path, resource_path: str, title: str, req
     last_error = None
     for font in fonts:
         try:
-            pandoc(markdown, output, resource_path, title, font, pdf=True)
+            pandoc(markdown, output, resource_path, title, font, pdf=True, cwd=cwd)
             return
         except subprocess.CalledProcessError as error:
             last_error = error
@@ -167,6 +186,7 @@ def pandoc(
     font: str = "",
     pdf: bool = False,
     media_dir: Path | None = None,
+    cwd: Path | None = None,
 ) -> None:
     command = [
         "pandoc",
@@ -181,5 +201,17 @@ def pandoc(
     if pdf:
         command += ["--pdf-engine=xelatex", "-V", f"mainfont={font}", "-V", "geometry:margin=2.2cm"]
     elif media_dir is not None:
-        command += ["--extract-media", str(media_dir)]
-    subprocess.run(command, check=True)
+        command += ["--extract-media", media_dir.as_posix()]
+    subprocess.run(command, check=True, cwd=cwd)
+    if media_dir is not None:
+        relativize_media_links(output, media_dir, cwd)
+
+
+def relativize_media_links(html_path: Path, media_dir: Path, cwd: Path | None) -> None:
+    root = cwd or Path.cwd()
+    absolute = media_dir if media_dir.is_absolute() else root / media_dir
+    text = html_path.read_text(encoding="utf-8")
+    prefixes = [absolute.resolve().as_posix(), str(absolute.resolve()), media_dir.as_posix()]
+    for prefix in sorted(set(prefixes), key=len, reverse=True):
+        text = text.replace(prefix, "media")
+    html_path.write_text(text, encoding="utf-8")
